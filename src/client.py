@@ -3,58 +3,72 @@ import asyncio
 
 from pyrogram import Client, filters
 from pyrogram.types import Message
-from datetime import datetime, timedelta
+from pyrogram.handlers import MessageHandler
 
+from datetime import datetime, timedelta
 from filemanager import FileManager
 
 
 class TelegramClient:
-    def __init__(self, filemanager: FileManager):
+    def __init__(self, filemanager: FileManager, use_start_device: bool):
         self.__filemanager = filemanager
 
+        client_settings = {
+            "name": str(os.getenv("CLIENT_NAME")),
+            "api_id": int(os.getenv("API_ID")),
+            "api_hash": str(os.getenv("API_HASH")),
+            "app_version": str(os.getenv("APP_VERSION")),
+            "system_version": str(os.getenv("SYSTEM")),
+            "workdir": self.filemanager.session_dir
+        }
+
+        start_device_name = str(os.getenv("START_DEVICE_NAME"))
+        device_name = str(os.getenv("DEVICE_NAME"))
+
         self.__app = Client(
-            os.getenv("CLIENT_NAME"), api_id=os.getenv("API_ID"), api_hash=os.getenv("API_HASH"),
-            workdir=self.__filemanager.session_dir, app_version=os.getenv("APP_VERSION"),
-            device_model=os.getenv("DEVICE_NAME"), system_version=os.getenv("SYSTEM")
+            **client_settings,
+            device_model=device_name
+            if (not use_start_device or os.listdir(filemanager.session_dir)) or start_device_name == ""
+            else start_device_name
         )
+
+        self.__app.add_handler(MessageHandler(self.answer, filters.incoming & filters.private & ~filters.bot))
 
     @property
     def filemanager(self) -> FileManager:
         return self.__filemanager
 
-    @property
-    def app(self) -> Client:
-        return self.__app
-
     def run(self) -> None:
         self.__app.run()
 
+    def auth(self) -> None:
+        self.__app.start()
 
-class MessageHandler:
-    def __init__(self, tg_client: TelegramClient):
-        self.__client = tg_client
+        loop = asyncio.get_event_loop()
+        loop.run_until_complete(asyncio.sleep(120))
 
-        @self.__client.app.on_message(filters.incoming & filters.private)
-        async def answer(client: Client, message: Message) -> None:
-            try:
-                user_id = message.from_user.id
-                username = message.from_user.username
-                message_text = self.__client.filemanager.get_message_text()
-            except ...:
-                pass
-            else:
-                if user_id in self.__client.filemanager.get_processed_users():
-                    return
+        self.__app.stop()
 
-                if self.__client.filemanager.except_mode ^ (user_id in self.__client.filemanager.get_except_users()):
-                    return
+    async def answer(self, client: Client, message: Message) -> None:
+        try:
+            user_id = message.from_user.id
+            username = message.from_user.username
+            message_text = self.filemanager.get_message_text()
+        except ...:
+            pass
+        else:
+            if user_id in self.filemanager.processed_users:
+                return
 
-                self.__client.filemanager.write_answered_user(str(user_id), username)
+            if self.filemanager.except_mode ^ (user_id in self.filemanager.except_users):
+                return
 
-                if message.date < datetime.now() - timedelta(seconds=10):
-                    return
+            self.filemanager.write_answered_user(str(user_id), username)
 
-                await asyncio.sleep(int(os.getenv("ANSWER_TIMEING")))
-                await client.send_message(user_id, message_text)
+            if message.date < datetime.now() - timedelta(seconds=10):
+                return
 
-                print(f"Answered: {user_id} {'- @' + username if username else ''}")
+            await asyncio.sleep(int(os.getenv("ANSWER_TIMEING")))
+            await client.send_message(user_id, message_text)
+
+            print(f"Answered: {user_id} {'- @' + username if username else ''}")
