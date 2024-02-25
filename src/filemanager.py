@@ -12,6 +12,7 @@ class FileManager:
 
         self.__processed_users_list_path = os.path.join(pardir, "processed.txt")
         self.__exception_list_path = os.path.join(pardir, "exceptions.txt")
+        self.__groups_list_path = os.path.join(pardir, "groups.txt")
 
         self.__except_mode = True if int(os.getenv("EXCEPT_MODE")) == 1 else False
         self.__check_input_files()
@@ -26,11 +27,15 @@ class FileManager:
 
     @property
     def processed_users(self) -> list[int]:
-        return self.__get_users_list(self.__processed_users_list_path)
+        return self.__get_chats_list(self.__processed_users_list_path)
 
     @property
     def except_users(self) -> list[int]:
-        return self.__get_users_list(self.__exception_list_path)
+        return self.__get_chats_list(self.__exception_list_path)
+
+    @property
+    def groups(self) -> list[int]:
+        return self.__get_chats_list(self.__groups_list_path)
 
     @staticmethod
     def __get_filedata(filepath: str, clear_voids: bool) -> list[str]:
@@ -56,13 +61,16 @@ class FileManager:
         if not os.path.exists(self.__exception_list_path):
             open(self.__exception_list_path, "a")
 
+        if not os.path.exists(self.__groups_list_path):
+            open(self.__groups_list_path, "a")
+
         if not os.path.exists(self.__processed_users_list_path):
             open(self.__processed_users_list_path, "a")
 
         if not os.path.exists(self.__session_dir):
             os.mkdir(self.__session_dir)
 
-    def __get_users_list(self, path: str) -> list[int]:
+    def __get_chats_list(self, path: str) -> list[int]:
         return [
             int(user_id.split(":")[0])
             for user_id in self.__get_filedata(path, True)

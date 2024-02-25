@@ -132,6 +132,4 @@ session/
 .session-journal
 
 # Generated files
-message.txt
-exceptions_list.txt
-processed_users.txt
+*.txt

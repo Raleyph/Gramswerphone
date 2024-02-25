@@ -4,6 +4,7 @@ import asyncio
 from pyrogram import Client, filters
 from pyrogram.types import Message
 from pyrogram.handlers import MessageHandler
+from pyrogram.raw.types import InputPeerChat
 
 from datetime import datetime, timedelta
 from filemanager import FileManager
@@ -32,7 +33,10 @@ class TelegramClient:
             else start_device_name
         )
 
-        self.__app.add_handler(MessageHandler(self.answer, filters.incoming & filters.private & ~filters.bot))
+        self.__app.add_handler(MessageHandler(
+            self.answer,
+            filters.incoming & ~filters.bot
+        ))
 
     @property
     def filemanager(self) -> FileManager:
@@ -51,24 +55,29 @@ class TelegramClient:
 
     async def answer(self, client: Client, message: Message) -> None:
         try:
-            user_id = message.from_user.id
-            username = message.from_user.username
+            chat_id = message.chat.id
+            username = message.chat.username
             message_text = self.filemanager.get_message_text()
         except ...:
             pass
         else:
-            if user_id in self.filemanager.processed_users:
+            if chat_id in self.filemanager.processed_users:
                 return
 
-            if self.filemanager.except_mode ^ (user_id in self.filemanager.except_users):
+            peer: InputPeerChat = await self.__app.resolve_peer(chat_id)
+
+            if chat_id < 0 and peer.chat_id not in self.filemanager.groups:
                 return
 
-            self.filemanager.write_answered_user(str(user_id), username)
+            if self.filemanager.except_mode ^ (chat_id in self.filemanager.except_users):
+                return
+
+            self.filemanager.write_answered_user(str(chat_id), username)
 
             if message.date < datetime.now() - timedelta(seconds=10):
                 return
 
             await asyncio.sleep(int(os.getenv("ANSWER_TIMEING")))
-            await client.send_message(user_id, message_text)
+            await client.send_message(chat_id, message_text)
 
-            print(f"Answered: {user_id} {'- @' + username if username else ''}")
+            print(f"Answered: {chat_id} {'- @' + username if username else ''}")
