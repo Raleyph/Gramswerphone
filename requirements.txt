@@ -1,0 +1,4 @@
+python-dotenv~=1.0.0
+asyncio~=3.4.3
+Pyrogram~=2.0.106
+tgcrypto~=1.2.5
