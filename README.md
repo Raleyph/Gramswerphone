@@ -2,7 +2,7 @@
  
 Autoresponder for Telegram. Powered by Pirogram.
 
-Curren version: 1.0
+Curren version: 1.2
 
 ## 👩‍🏫 Usage
 
