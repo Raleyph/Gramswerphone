@@ -2,7 +2,7 @@
  
 Autoresponder for Telegram. Powered by Pirogram.
 
-Curren version: 1.0
+Curren version: 1.2
 
 ## 👩‍🏫 Usage
 
@@ -21,7 +21,8 @@ Before running the program, make sure that the correct settings are specified in
 * **API_ID** - API ID of Telegram App.
 * **API_HASH** - API hash of Telegram App.
 * **APP_VERSION** - version of the application, shown in the session description.
-* **DEVICE_NAME** - device name, shown in the session description.
 * **SYSTEM** - OS, shown in session description.
+* **DEVICE_NAME** - device name, shown in the session description.
+* **START_DEVICE_NAME** - device name, shown in the session description first two minutes (optional).
 * **ANSWER_TIMEING** - delay before response.
 * **EXCEPT_MODE** - mode of file **exceptions.txt** (0 - this is blacklist, 1 - this is whitelist)
