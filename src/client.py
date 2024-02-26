@@ -35,7 +35,7 @@ class TelegramClient:
 
         self.__app.add_handler(MessageHandler(
             self.answer,
-            filters.incoming & ~filters.bot
+            filters.incoming & ~filters.bot & ~filters.channel
         ))
 
     @property
