@@ -64,10 +64,11 @@ class TelegramClient:
             if chat_id in self.filemanager.processed_users:
                 return
 
-            peer: InputPeerChat = await self.__app.resolve_peer(chat_id)
+            peer = await self.__app.resolve_peer(chat_id)
 
-            if chat_id < 0 and peer.chat_id not in self.filemanager.groups:
-                return
+            if isinstance(peer, InputPeerChat):
+                if chat_id < 0 and peer.chat_id not in self.filemanager.groups:
+                    return
 
             if self.filemanager.except_mode ^ (chat_id in self.filemanager.except_users):
                 return
