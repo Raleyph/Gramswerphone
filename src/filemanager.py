@@ -71,10 +71,15 @@ class FileManager:
             os.mkdir(self.__session_dir)
 
     def __get_chats_list(self, path: str) -> list[int]:
-        return [
-            int(user_id.split(":")[0])
-            for user_id in self.__get_filedata(path, True)
-        ]
+        chats_list = []
+
+        for user_id in self.__get_filedata(path, True):
+            try:
+                chats_list.append(int(user_id.split(":")[0]))
+            except ValueError:
+                pass
+
+        return chats_list
 
     def get_message_text(self) -> str:
         return "\n".join(self.__get_filedata(self.__message_text_path, False))

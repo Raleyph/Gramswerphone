@@ -59,26 +59,26 @@ class TelegramClient:
             username = message.chat.username
             message_text = self.filemanager.get_message_text()
         except ...:
-            pass
-        else:
-            if chat_id in self.filemanager.processed_users:
+            return
+
+        if chat_id in self.filemanager.processed_users:
+            return
+
+        peer = await self.__app.resolve_peer(chat_id)
+
+        if isinstance(peer, InputPeerChat):
+            if chat_id < 0 and peer.chat_id not in self.filemanager.groups:
                 return
 
-            peer = await self.__app.resolve_peer(chat_id)
+        if self.filemanager.except_mode ^ (chat_id in self.filemanager.except_users):
+            return
 
-            if isinstance(peer, InputPeerChat):
-                if chat_id < 0 and peer.chat_id not in self.filemanager.groups:
-                    return
+        self.filemanager.write_answered_user(str(chat_id), username)
 
-            if self.filemanager.except_mode ^ (chat_id in self.filemanager.except_users):
-                return
+        if message.date < datetime.now() - timedelta(seconds=10):
+            return
 
-            self.filemanager.write_answered_user(str(chat_id), username)
+        await asyncio.sleep(int(os.getenv("ANSWER_TIMEING")))
+        await client.send_message(chat_id, message_text)
 
-            if message.date < datetime.now() - timedelta(seconds=10):
-                return
-
-            await asyncio.sleep(int(os.getenv("ANSWER_TIMEING")))
-            await client.send_message(chat_id, message_text)
-
-            print(f"Answered: {chat_id} {'- @' + username if username else ''}")
+        print(f"Answered: {chat_id} {'- @' + username if username else ''}")
